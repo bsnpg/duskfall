@@ -23,6 +23,7 @@ const els = {
   title: $('titleScreen'), dead: $('deadScreen'), win: $('winScreen'),
   deadStats: $('deadStats'), winStats: $('winStats'),
   altarPanel: $('altarPanel'), traderPanel: $('traderPanel'), invPanel: $('invPanel'),
+  hudTop: $('hudTop'), hudBottom: $('hudBottom'),
   altarRows: $('altarRows'), traderRows: $('traderRows'), inv: $('inv'),
 };
 
@@ -323,7 +324,7 @@ function updateHud() {
   els.floorPill.textContent = area.kind === TOWN ? '🏠 Kota Terakhir' : area.kind === MINE ? '⛏️ Tambang' : `🌀 Lantai ${area.floor}/20`;
   els.goldText.textContent = player.gold;
   els.mineText.textContent = fmtTime(mineLeft());
-  els.classPill.textContent = `${player.cls.icon} ${player.cls.name} · ATK ${st.atk} · DEF ${st.def} · SPD ${st.speed.toFixed(1)} · CRIT ${Math.round(st.crit * 100)}%`;
+  els.classPill.textContent = `${player.cls.icon} ${player.cls.name} · ATK ${st.atk} · DEF ${st.def}`;
   const eq = player.equipped;
   els.gearPill.textContent = `⚔️ ${eq.weapon ? eq.weapon.name : '—'} · 🛡️ ${eq.armor ? eq.armor.name : '—'} · ✨ ${eq.charm ? eq.charm.name : '—'}`;
   const stones = Object.entries(player.stones).map(([k, n]) => `${STONES[k].icon}${n}`).join(' ');
@@ -338,6 +339,10 @@ function frame(t) {
   const now = t / 1000;
   let dt = Math.min(0.05, now - (lastNow || now));
   lastNow = now;
+  // HUD only belongs to live play; the title/dead/win overlays are clean.
+  const inPlay = mode === 'play';
+  els.hudTop.style.display = inPlay ? 'flex' : 'none';
+  els.hudBottom.style.display = inPlay ? 'flex' : 'none';
   if (!player || mode !== 'play') { render(ctx, area, player || { x: 480, y: 300, r: 15, hp: 1, cls: CLASSES.knight, level: 1, buffUntil: 0, hurtCd: 0, aim: 0 }, now); return; }
   if (panel) { render(ctx, area, player, now); return; }
 
@@ -448,6 +453,19 @@ function stageScene(scene) {
   } else {
     area = buildDungeonFloor(6);
     player.x = 12 * 32; player.y = 10 * 32;
+    player.hp = player.maxHp;
+    // Stage a live mid-fight moment: a ring of monsters closing in, close
+    // enough to read inside the dungeon light, far enough that the player
+    // cannot die before the screenshot is taken.
+    const ring = area.monsters.filter((m) => !m.dead).slice(0, 7);
+    area.monsters = ring;
+    ring.forEach((m, i) => {
+      const a = (i / ring.length) * Math.PI * 2;
+      const d = 150 + (i % 3) * 30;
+      m.x = player.x + Math.cos(a) * d;
+      m.y = player.y + Math.sin(a) * d;
+      m.hitCd = 1.5; m.shootCd = 2; m.flash = 0;
+    });
     area.drops.push({ x: 14 * 32, y: 9 * 32, kind: 'stone', stone: 'magic', n: 2, r: 10 });
     area.drops.push({ x: 10 * 32, y: 8 * 32, kind: 'gold', n: 12, r: 8 });
   }

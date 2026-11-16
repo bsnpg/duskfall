@@ -238,6 +238,6 @@ export function render(ctx, area, player, now) {
   ctx.save();
   ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'left';
   ctx.fillStyle = 'rgba(232,224,245,0.85)';
-  ctx.fillText(area.label, 12, 590);
+  ctx.fillText(area.label, 12, 562);
   ctx.restore();
 }
