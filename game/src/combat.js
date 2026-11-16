@@ -183,7 +183,7 @@ export function damageMonster(area, player, m, dmg, crit, now) {
   const st = effectiveStats(player, now);
   m.hp -= dmg;
   m.flash = 0.12;
-  addText(area, m.x, m.y - m.r - 6, (crit ? 'KRIT ' : '') + dmg, crit ? '#ffd94a' : '#fff');
+  addText(area, m.x, m.y - m.r - 6, (crit ? 'CRIT ' : '') + dmg, crit ? '#ffd94a' : '#fff');
   addParticles(area, m.x, m.y, m.color, 5);
   sfx.hit();
   if (m.hp <= 0) {
@@ -194,7 +194,7 @@ export function damageMonster(area, player, m, dmg, crit, now) {
     rollDrops(area, player, m);
     if (m.kind === 'boss') {
       player.hasDawnStone = true;
-      addText(area, m.x, m.y - 30, '☀️ BATU TERAKHIR DIDAPAT!', '#ffd94a');
+      addText(area, m.x, m.y - 30, '☀️ LAST STONE CLAIMED!', '#ffd94a');
       sfx.win();
     }
   }
@@ -291,11 +291,11 @@ export function updateMonsters(area, player, dt, now) {
         m.summonCd = 7;
         const spot = randomFreeSpot(area, Math.random);
         area.monsters.push({
-          kind: 'monster', type: 'wisp', name: 'Bayangan Iblis', x: spot.x, y: spot.y,
+          kind: 'monster', type: 'wisp', name: 'Demon Shadow', x: spot.x, y: spot.y,
           r: 12, color: '#ff2e63', hp: 40, maxHp: 40, atk: 14, speed: 2.8,
           xp: 10, hitCd: 0, flash: 0, dead: false, ranged: true, shootCd: 1,
         });
-        addText(area, spot.x, spot.y - 18, 'Raja Iblis memanggil bayangan!', '#ff5a8a');
+        addText(area, spot.x, spot.y - 18, 'The Demon King calls a shadow!', '#ff5a8a');
       }
     }
     // Contact damage.
@@ -317,7 +317,7 @@ export function updateMonsters(area, player, dt, now) {
     if (!alive) {
       area.cleared = true;
       for (const o of area.objects) if (o.id === 'stairsDown') o.locked = false;
-      addText(area, player.x, player.y - 30, '✦ Lantai bersih — tangga terbuka!', '#ffd94a');
+      addText(area, player.x, player.y - 30, '✦ Floor cleared — stairs open!', '#ffd94a');
       sfx.stairs();
     }
   }

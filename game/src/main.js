@@ -87,16 +87,16 @@ function enterDungeon(floor) {
   area = buildDungeonFloor(floor);
   player.x = 3 * 32; player.y = 15 * 32;
   startMusic('dungeon');
-  toast(floor === 20 ? '👑 Lantai 20 — Raja Iblis Kegelapan menantimu!' : `Dungeon lantai ${floor} — bersihkan semua monster!`);
+  toast(floor === 20 ? '👑 Floor 20 — the Demon King of Darkness awaits you!' : `Dungeon floor ${floor} — clear every monster!`);
   updateHud();
 }
 
 function enterMine() {
-  if (mineLeft() <= 0) { toast('⛏️ Tambang sudah tutup hari ini. Batas masuk 1 jam sehari.'); return; }
+  if (mineLeft() <= 0) { toast('⛏️ The mine is closed for today. Entry is limited to 1 hour a day.'); return; }
   area = buildMine(Math.random);
   player.x = 15 * 32; player.y = 15 * 32;
   startMusic('town');
-  toast('⛏️ Tambang Crystal — zona aman. Klik bijih untuk menambang batu.');
+  toast('⛏️ Crystal Mine — a safe zone. Click ore to mine stones.');
   updateHud();
 }
 
@@ -118,13 +118,13 @@ function openAltar() {
     const n = player.stones[kind];
     const usable = kind === own;
     html += `<div class="row"><span>${st.icon} ${st.name}: <b>${n}</b></span>
-      <button data-kind="${kind}" data-all="0" ${!usable || n < 1 ? 'disabled' : ''}>Umpan 1 → +${CRYSTAL_PER_STONE} 💠</button>
-      <button data-kind="${kind}" data-all="1" ${!usable || n < 1 ? 'disabled' : ''}>Umpan semua</button>
-      ${usable ? '' : '<span style="color:#9d8fc4">bukan job-mu</span>'}</div>`;
+      <button data-kind="${kind}" data-all="0" ${!usable || n < 1 ? 'disabled' : ''}>Feed 1 → +${CRYSTAL_PER_STONE} 💠</button>
+      <button data-kind="${kind}" data-all="1" ${!usable || n < 1 ? 'disabled' : ''}>Feed all</button>
+      ${usable ? '' : '<span style="color:#9d8fc4">not your job</span>'}</div>`;
   }
   if (player.hasDawnStone) {
-    html += `<div class="row" style="margin-top:10px"><b style="color:#ffd94a">☀️ Kau membawa Batu Terakhir!</b>
-      <button id="igniteBtn">🔥 NYALAKAN ALTAR SEMPURNA</button></div>`;
+    html += `<div class="row" style="margin-top:10px"><b style="color:#ffd94a">☀️ You carry the Last Stone!</b>
+      <button id="igniteBtn">🔥 LIGHT THE PERFECT ALTAR</button></div>`;
   }
   els.altarRows.innerHTML = html;
   els.altarRows.querySelectorAll('button[data-kind]').forEach((b) => {
@@ -136,7 +136,7 @@ function openAltar() {
       player.stones[kind] -= n;
       player.crystals += n * CRYSTAL_PER_STONE;
       sfx.altar();
-      toast(`🕯️ Altar menyala! +${n * CRYSTAL_PER_STONE} ${player.cls.crystalName}`);
+      toast(`🕯️ The altar burns! +${n * CRYSTAL_PER_STONE} ${player.cls.crystalName}`);
       openAltar(); updateHud();
     });
   });
@@ -148,15 +148,15 @@ function openAltar() {
 function openTrader() {
   panel = 'trader';
   const own = player.cls.crystal;
-  let html = `<p>💰 Emasmu: <b>${player.gold}</b> &nbsp;·&nbsp; Batu job-mu (${STONES[own].name}): <b>${player.stones[own]}</b></p>`;
+  let html = `<p>💰 Your gold: <b>${player.gold}</b> &nbsp;·&nbsp; Stones of your job (${STONES[own].name}): <b>${player.stones[own]}</b></p>`;
   for (const [kind, st] of Object.entries(STONES)) {
     if (kind === own) continue;
     const n = player.stones[kind];
     html += `<div class="row"><span>${st.icon} ${st.name}: <b>${n}</b></span>
-      <button data-trade="${kind}" ${n < TRADE_RATE ? 'disabled' : ''}>Tukar ${TRADE_RATE} → 1 ${STONES[own].name}</button>
-      <button data-sell="${kind}" ${n < 1 ? 'disabled' : ''}>Jual 1 (+10 🪙)</button></div>`;
+      <button data-trade="${kind}" ${n < TRADE_RATE ? 'disabled' : ''}>Trade ${TRADE_RATE} → 1 ${STONES[own].name}</button>
+      <button data-sell="${kind}" ${n < 1 ? 'disabled' : ''}>Sell 1 (+10 🪙)</button></div>`;
   }
-  html += `<div class="row"><span>Beli 1 ${STONES[own].name}</span>
+  html += `<div class="row"><span>Buy 1 ${STONES[own].name}</span>
     <button data-buy="1" ${player.gold < 25 ? 'disabled' : ''}>25 🪙</button></div>`;
   els.traderRows.innerHTML = html;
   els.traderRows.querySelectorAll('button[data-trade]').forEach((b) => {
@@ -191,13 +191,13 @@ function openTrader() {
 function openInv() {
   panel = 'inv';
   const st = effectiveStats(player, performance.now() / 1000);
-  let html = `<p>Stat efektif: ATK <b>${st.atk}</b> · DEF <b>${st.def}</b> · HP <b>${player.hp}/${player.maxHp}</b> · CRIT <b>${Math.round(st.crit * 100)}%</b></p>`;
-  html += '<p>Terpasang:</p><div style="display:flex;gap:6px;flex-wrap:wrap">';
+  let html = `<p>Effective stats: ATK <b>${st.atk}</b> · DEF <b>${st.def}</b> · HP <b>${player.hp}/${player.maxHp}</b> · CRIT <b>${Math.round(st.crit * 100)}%</b></p>`;
+  html += '<p>Equipped:</p><div style="display:flex;gap:6px;flex-wrap:wrap">';
   for (const [slot, item] of Object.entries(player.equipped)) {
-    html += `<div class="slot" data-eq="${slot}">${slot.toUpperCase()}<br>${item ? `<span class="r-${item.rarity}">${item.name}</span><br>${statSummary(item.stats)}` : '— kosong —'}</div>`;
+    html += `<div class="slot" data-eq="${slot}">${slot.toUpperCase()}<br>${item ? `<span class="r-${item.rarity}">${item.name}</span><br>${statSummary(item.stats)}` : '— empty —'}</div>`;
   }
-  html += '</div><p>Tas (klik untuk memakai):</p><div style="display:flex;gap:6px;flex-wrap:wrap">';
-  if (!player.inventory.length) html += '<span style="color:#9d8fc4">Tas kosong — kalahkan monster untuk drop armor.</span>';
+  html += '</div><p>Bag (click to equip):</p><div style="display:flex;gap:6px;flex-wrap:wrap">';
+  if (!player.inventory.length) html += '<span style="color:#9d8fc4">Bag is empty — defeat monsters for armor drops.</span>';
   for (const item of player.inventory) {
     html += `<div class="slot" data-item="${item.id}"><span class="r-${item.rarity}">${item.name}</span><br>${statSummary(item.stats)}</div>`;
   }
@@ -247,7 +247,7 @@ function startRun() {
     el.classList.toggle('you', CLASS_IDS[i] === player.classId);
   });
   goTown();
-  toast(`${player.cls.icon} Takdir memilihmu: ${player.cls.name}! Stat-mu diundi acak — kuatkan dengan equipment.`, 4200);
+  toast(`${player.cls.icon} Fate chose you: ${player.cls.name}! Your stats were drawn at random — strengthen them with equipment.`, 4200);
   updateHud();
 }
 
@@ -258,7 +258,7 @@ function doDead() {
   const sc = score();
   const best = Math.max(sc, parseInt(localStorage.getItem(BEST_KEY) || '0', 10));
   localStorage.setItem(BEST_KEY, String(best));
-  els.deadStats.innerHTML = `Kelas: <b>${player.cls.name}</b> · Level ${player.level} · Lantai ${area.floor} · Kill ${player.kills}<br>Skor: <b>${sc}</b> · Terbaik: <b>${best}</b>`;
+  els.deadStats.innerHTML = `Class: <b>${player.cls.name}</b> · Level ${player.level} · Floor ${area.floor} · Kills ${player.kills}<br>Score: <b>${sc}</b> · Best: <b>${best}</b>`;
   els.dead.style.display = 'flex';
 }
 
@@ -269,7 +269,7 @@ function doWin() {
   const sc = score() + 500;
   const best = Math.max(sc, parseInt(localStorage.getItem(BEST_KEY) || '0', 10));
   localStorage.setItem(BEST_KEY, String(best));
-  els.winStats.innerHTML = `Kelas: <b>${player.cls.name}</b> · Level ${player.level} · Kill ${player.kills}<br>Skor: <b>${sc}</b> · Terbaik: <b>${best}</b>`;
+  els.winStats.innerHTML = `Class: <b>${player.cls.name}</b> · Level ${player.level} · Kills ${player.kills}<br>Score: <b>${sc}</b> · Best: <b>${best}</b>`;
   els.win.style.display = 'flex';
   updateHud();
 }
@@ -285,7 +285,7 @@ function interact() {
   else if (o.id === 'mineExit') { exitMine(); }
   else if (o.id === 'dungeonDoor') { enterDungeon(1); }
   else if (o.id === 'stairsDown') {
-    if (o.locked) { toast('🔒 Tangga terkunci — bersihkan semua monster di lantai ini!'); return; }
+    if (o.locked) { toast('🔒 Stairs locked — clear every monster on this floor!'); return; }
     player.floorsCleared += 1;
     enterDungeon(area.floor + 1);
   } else if (o.id === 'portalUp') { goTown(); }
@@ -304,7 +304,7 @@ function mineClick() {
         const kinds = Object.keys(STONES);
         const kind = kinds[Math.floor(Math.random() * kinds.length)];
         area.drops.push({ x: n.x, y: n.y, kind: 'stone', stone: kind, n: 1 + (Math.random() < 0.3 ? 1 : 0), r: 10 });
-        toast(`⛏️ Dapat ${STONES[kind].name}!`);
+        toast(`⛏️ Got ${STONES[kind].name}!`);
       }
       return;
     }
@@ -321,14 +321,14 @@ function updateHud() {
   els.xpFill.style.width = `${Math.min(100, (player.xp / player.xpNext) * 100)}%`;
   els.xpText.textContent = `Lv ${player.level}`;
   els.crystalPill.innerHTML = `${player.cls.crystalIcon} ${player.cls.crystalName} <b>${player.crystals}</b>`;
-  els.floorPill.textContent = area.kind === TOWN ? '🏠 Kota Terakhir' : area.kind === MINE ? '⛏️ Tambang' : `🌀 Lantai ${area.floor}/20`;
+  els.floorPill.textContent = area.kind === TOWN ? '🏠 Last Town' : area.kind === MINE ? '⛏️ Mine' : `🌀 Floor ${area.floor}/20`;
   els.goldText.textContent = player.gold;
   els.mineText.textContent = fmtTime(mineLeft());
   els.classPill.textContent = `${player.cls.icon} ${player.cls.name} · ATK ${st.atk} · DEF ${st.def}`;
   const eq = player.equipped;
   els.gearPill.textContent = `⚔️ ${eq.weapon ? eq.weapon.name : '—'} · 🛡️ ${eq.armor ? eq.armor.name : '—'} · ✨ ${eq.charm ? eq.charm.name : '—'}`;
   const stones = Object.entries(player.stones).map(([k, n]) => `${STONES[k].icon}${n}`).join(' ');
-  els.stonePill.textContent = `🪨 ${stones}${player.hasDawnStone ? ' · ☀️ Batu Terakhir' : ''}`;
+  els.stonePill.textContent = `🪨 ${stones}${player.hasDawnStone ? ' · ☀️ Last Stone' : ''}`;
   if (player.crystals === 0) els.crystalPill.style.borderColor = '#ff5a5a';
   else els.crystalPill.style.borderColor = '';
 }
@@ -350,7 +350,7 @@ function frame(t) {
   if (area.kind === MINE) {
     const left = mineLeft() - dt;
     setMineLeft(left);
-    if (left <= 0) { toast('⏳ Waktu tambang hari ini habis! (1 jam/hari)'); exitMine(); }
+    if (left <= 0) { toast('⏳ Your mine time for today is up! (1 hour/day)'); exitMine(); }
     for (const n of area.nodes) {
       if (n.hp <= 0 && n.respawn > 0) {
         n.respawn -= dt;
@@ -375,7 +375,7 @@ function frame(t) {
     const res = playerAttack(player, area, mouse, now);
     if (res === 'nocrystal' && now - noCrystalWarnedAt > 2.5) {
       noCrystalWarnedAt = now;
-      toast('💠 Crystal habis! Kau tak bisa bertarung — ke tambang atau altar dulu.');
+      toast('💠 Out of crystals! You cannot fight — head to the mine or the altar first.');
     }
   }
   if (consumeClick() && area.kind === MINE) mineClick();
@@ -399,7 +399,7 @@ function frame(t) {
 // ---- keys -----------------------------------------------------------------
 function onKey(k) {
   ensureAudio();
-  if (k === 'm') { const m = toggleMute(); toast(m ? '🔇 Suara mati' : '🔊 Suara hidup'); return; }
+  if (k === 'm') { const m = toggleMute(); toast(m ? '🔇 Sound off' : '🔊 Sound on'); return; }
   if (mode === 'title' && (k === 'enter' || k === ' ')) { startRun(); return; }
   if ((mode === 'dead' || mode === 'win') && k === 'r') { startRun(); return; }
   if (mode !== 'play' || !player) return;
@@ -408,7 +408,7 @@ function onKey(k) {
     else interact();
   } else if (k === 'q') {
     const res = useSkill(player, area, mouse, performance.now() / 1000);
-    if (res === 'nocrystal') toast('💠 Crystal tidak cukup untuk skill (butuh 3).');
+    if (res === 'nocrystal') toast('💠 Not enough crystals for the skill (needs 3).');
   } else if (k === 'i') {
     if (panel === 'inv') closePanels();
     else if (!panel) openInv();

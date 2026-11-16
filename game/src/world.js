@@ -19,7 +19,7 @@ function borderSolids() {
 
 export function buildTown() {
   return {
-    kind: TOWN, floor: 0, label: 'Kota Terakhir',
+    kind: TOWN, floor: 0, label: 'Last Town',
     solids: [
       ...borderSolids(),
       { x: 4, y: 3, w: 4, h: 3 },   // house west
@@ -27,10 +27,10 @@ export function buildTown() {
       { x: 13, y: 2, w: 4, h: 2 },  // altar dais base
     ],
     objects: [
-      { id: 'altar', x: 15 * TILE, y: 3.2 * TILE, r: 44, label: 'Altar Cahaya (E)' },
-      { id: 'trader', x: 24 * TILE, y: 5 * TILE, r: 40, label: 'Pedagang Bram (E)' },
-      { id: 'mineDoor', x: 2 * TILE, y: 9 * TILE, r: 42, label: 'Tambang Crystal (E)' },
-      { id: 'dungeonDoor', x: 15 * TILE, y: 16 * TILE, r: 46, label: 'Masuk Dungeon (E)' },
+      { id: 'altar', x: 15 * TILE, y: 3.2 * TILE, r: 44, label: 'Altar of Light (E)' },
+      { id: 'trader', x: 24 * TILE, y: 5 * TILE, r: 40, label: 'Merchant Bram (E)' },
+      { id: 'mineDoor', x: 2 * TILE, y: 9 * TILE, r: 42, label: 'Crystal Mine (E)' },
+      { id: 'dungeonDoor', x: 15 * TILE, y: 16 * TILE, r: 46, label: 'Enter Dungeon (E)' },
     ],
     nodes: [],
     monsters: [], drops: [], projectiles: [], particles: [], texts: [],
@@ -46,13 +46,13 @@ export function buildMine(rng) {
     });
   }
   return {
-    kind: MINE, floor: 0, label: 'Tambang Crystal — Zona Aman',
+    kind: MINE, floor: 0, label: 'Crystal Mine — Safe Zone',
     solids: [
       ...borderSolids(),
       { x: 7, y: 6, w: 2, h: 2 }, { x: 19, y: 10, w: 3, h: 2 }, { x: 12, y: 12, w: 2, h: 2 },
     ],
     objects: [
-      { id: 'mineExit', x: 15 * TILE, y: 16.5 * TILE, r: 46, label: 'Keluar Tambang (E)' },
+      { id: 'mineExit', x: 15 * TILE, y: 16.5 * TILE, r: 46, label: 'Leave Mine (E)' },
     ],
     nodes, monsters: [], drops: [], projectiles: [], particles: [], texts: [],
   };
@@ -89,15 +89,15 @@ export function buildDungeonFloor(floor) {
     if (isMiniFloor) monsters.push(makeMiniBoss(floor, rng));
   }
   const objects = [
-    { id: 'portalUp', x: 3 * TILE, y: 16 * TILE, r: 40, label: 'Kembali ke Kota (E)' },
+    { id: 'portalUp', x: 3 * TILE, y: 16 * TILE, r: 40, label: 'Back to Town (E)' },
   ];
   // Floor 20 has no stairs down: the only way on is back to town, carrying
   // the Dawn Stone to the altar.
   if (!isBossFloor) {
-    objects.unshift({ id: 'stairsDown', x: 27 * TILE, y: 2 * TILE, r: 40, label: 'Turun (E)', locked: true });
+    objects.unshift({ id: 'stairsDown', x: 27 * TILE, y: 2 * TILE, r: 40, label: 'Descend (E)', locked: true });
   }
   return {
-    kind: DUNGEON, floor, label: isBossFloor ? 'Lantai 20 — Takhta Raja Iblis' : `Dungeon — Lantai ${floor}`,
+    kind: DUNGEON, floor, label: isBossFloor ? 'Floor 20 — Throne of the Demon King' : `Dungeon — Floor ${floor}`,
     solids,
     objects,
     nodes: [], monsters, drops: [], projectiles: [], particles: [], texts: [],

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -63,9 +63,9 @@
     <div class="bar"><i id="hpFill" style="width:100%"></i><span id="hpText">HP 100/100</span></div>
     <div class="bar xp"><i id="xpFill" style="width:0%"></i><span id="xpText">Lv 1</span></div>
     <span class="pill" id="crystalPill">🔷 Crystal <b>0</b></span>
-    <span class="pill" id="floorPill">🏠 Kota</span>
+    <span class="pill" id="floorPill">🏠 Town</span>
     <span class="pill">🪙 <b id="goldText">0</b></span>
-    <span class="pill">⏳ Tambang <b id="mineText">60:00</b></span>
+    <span class="pill">⏳ Mine <b id="mineText">60:00</b></span>
   </div>
 
   <div id="toast"></div>
@@ -75,65 +75,65 @@
     <span id="classPill">—</span>
     <span id="gearPill">⚔️ — 🛡️ — ✨ —</span>
     <span id="stonePill">🪨 —</span>
-    <span><kbd>WASD</kbd> gerak · <kbd>Klik</kbd> serang · <kbd>Q</kbd> skill · <kbd>E</kbd> pakai · <kbd>I</kbd> tas · <kbd>M</kbd> suara</span>
+    <span><kbd>WASD</kbd> move · <kbd>Click</kbd> attack · <kbd>Q</kbd> skill · <kbd>E</kbd> use · <kbd>I</kbd> bag · <kbd>M</kbd> sound</span>
   </div>
 
   <div class="overlay" id="titleScreen">
     <h1>DUSKFALL</h1>
     <p><b>Altar of the Last Light</b></p>
-    <p>Masa kegelapan datang. Empat orang terpilih mendapat bakat luar biasa — tapi tak seorang pun
-       boleh memilih bakatnya. Kekuatanmu diundi saat kau melangkah masuk. Stat-mu acak. Yang membuatmu
-       kuat hanyalah <b>equipment</b> dan <b>armor</b> yang kau rebut dari monster.</p>
-    <p>Kekuatanmu hidup dari <b>crystal</b> sesuai job-mu. Crystal habis, kau tak bisa bertarung.
-       Batu dari monster dan tambang menghidupkan altar — dan altar menghidupkan crystal-mu.
-       Kalahkan <b>Raja Iblis Kegelapan di lantai 20</b>, rebut Batu Terakhir, dan nyalakan altar
-       sampai sempurna agar kegelapan lenyap dari muka bumi.</p>
+    <p>Darkness is coming. Four chosen ones receive extraordinary talents — but no one
+       may choose their own. Your power is drawn the moment you step in. Your stats are
+       random. What makes you strong is only the <b>equipment</b> and <b>armor</b> you rip from monsters.</p>
+    <p>Your power lives on the <b>crystal</b> of your job. Out of crystals, you cannot fight.
+       Stones from monsters and the mine wake the altar — and the altar wakes your crystals.
+       Defeat the <b>Demon King of Darkness on floor 20</b>, claim the Last Stone, and light the altar
+       perfectly so darkness vanishes from the earth.</p>
     <div class="cards" id="classCards"></div>
-    <p class="sub">Klik mulai untuk mengundi bakatmu. Tidak bisa dipilih — seperti takdir.</p>
-    <button id="startBtn">🎲 UNDI BAKAT &amp; MULAI</button>
-    <p class="sub">WASD / panah: gerak &nbsp;·&nbsp; Mouse + klik: serang &nbsp;·&nbsp; Q: skill (3 crystal) &nbsp;·&nbsp; E: pakai altar / tambang / pintu &nbsp;·&nbsp; I: tas</p>
+    <p class="sub">Click start to draw your talent. It cannot be chosen — like fate.</p>
+    <button id="startBtn">🎲 DRAW TALENT &amp; START</button>
+    <p class="sub">WASD / arrows: move &nbsp;·&nbsp; Mouse + click: attack &nbsp;·&nbsp; Q: skill (3 crystals) &nbsp;·&nbsp; E: use altar / mine / doors &nbsp;·&nbsp; I: bag</p>
   </div>
 
   <div class="overlay" id="deadScreen" style="display:none">
-    <h2>☠ KEGELAPAN MENANG ☠</h2>
+    <h2>☠ DARKNESS WINS ☠</h2>
     <p id="deadStats"></p>
-    <p>Altar meredup. Tapi seorang terpilih tidak pernah benar-benar mati — ia diundi kembali.</p>
-    <button id="retryBtn">🔄 UNDI LAGI &amp; COBA LAGI (R)</button>
+    <p>The altar dims. But a chosen one never truly dies — they are drawn again.</p>
+    <button id="retryBtn">🔄 DRAW AGAIN &amp; RETRY (R)</button>
   </div>
 
   <div class="overlay" id="winScreen" style="display:none">
-    <h2>🌅 KEGELAPAN LENYAP 🌅</h2>
+    <h2>🌅 DARKNESS IS GONE 🌅</h2>
     <p id="winStats"></p>
-    <p>Altar menyala sempurna. Cahaya terakhir menelan malam, dan bumi bernapas lagi.
-       Kaulah yang mengakhirinya — dengan crystal, batu, dan keberanian.</p>
-    <button id="againBtn">✨ MAIN LAGI (R)</button>
+    <p>The altar burns perfectly. The last light swallows the night, and the earth breathes again.
+       You ended it — with crystal, stone, and courage.</p>
+    <button id="againBtn">✨ PLAY AGAIN (R)</button>
   </div>
 
   <div class="panel" id="altarPanel">
     <div class="box">
-      <h2>🕯️ Altar Cahaya Terakhir</h2>
-      <p>Umpankan batu ke altar. Setiap batu job-mu menjadi <b>6 crystal</b>. Batu job lain tidak bisa
-         dipakai di sini — tukarkan pada Pedagang di kota.</p>
+      <h2>🕯️ Altar of the Last Light</h2>
+      <p>Feed stones to the altar. Each stone of your job becomes <b>6 crystals</b>. Stones of other
+         jobs cannot be used here — trade them with the Merchant in town.</p>
       <div id="altarRows"></div>
-      <div class="row"><button id="altarClose" class="ghost">Tutup (E)</button></div>
+      <div class="row"><button id="altarClose" class="ghost">Close (E)</button></div>
     </div>
   </div>
 
   <div class="panel" id="traderPanel">
     <div class="box">
-      <h2>🧳 Pedagang Batu — Bram</h2>
-      <p>"Batu salah job? Sini. Dua batu apa saja kutukar satu batu job-mu. Atau jual batu, beli yang kau perlu."</p>
+      <h2>🧳 Stone Merchant — Bram</h2>
+      <p>"Wrong-job stones? Bring them here. Any two stones I trade for one stone of your job. Or sell stones, buy what you need."</p>
       <div id="traderRows"></div>
-      <div class="row"><button id="traderClose" class="ghost">Tutup (E)</button></div>
+      <div class="row"><button id="traderClose" class="ghost">Close (E)</button></div>
     </div>
   </div>
 
   <div class="panel" id="invPanel">
     <div class="box">
-      <h2>🎒 Tas &amp; Equipment</h2>
-      <p>Klik equipment untuk memakai / melepas. Armor dan senjata menaikkan stat acakmu.</p>
+      <h2>🎒 Bag &amp; Equipment</h2>
+      <p>Click equipment to equip / unequip. Armor and weapons raise your random stats.</p>
       <div id="inv"></div>
-      <div class="row"><button id="invClose" class="ghost">Tutup (I)</button></div>
+      <div class="row"><button id="invClose" class="ghost">Close (I)</button></div>
     </div>
   </div>
 
