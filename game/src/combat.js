@@ -20,7 +20,7 @@ export function createPlayer(rng) {
     classId, cls, rolled,
     x: 15 * 32, y: 10 * 32, r: 15,
     hp: stats.hp, maxHp: stats.hp,
-    crystals: 25, gold: 20,
+    crystals: 25,
     level: 1, xp: 0, xpNext: 40,
     stones: { speed: 0, str: 0, magic: 0, life: 0 },
     inventory: [], equipped: { weapon: null, armor: null, charm: null },
@@ -216,9 +216,8 @@ function rollDrops(area, player, m) {
     const item = rollArmor(makeRng(Math.floor(rng() * 1e9)), floor);
     area.drops.push({ x: m.x, y: m.y + 14, kind: 'armor', item, r: 12 });
   }
-  // Hearts and gold keep a run alive.
+  // Hearts keep a run alive.
   if (rng() < 0.25) area.drops.push({ x: m.x, y: m.y - 14, kind: 'heart', n: Math.round(player.maxHp * 0.2), r: 9 });
-  if (rng() < 0.6) area.drops.push({ x: m.x + 16, y: m.y, kind: 'gold', n: 4 + Math.floor(rng() * 10), r: 8 });
 }
 
 export function collectDrops(player, area) {
@@ -238,10 +237,6 @@ export function collectDrops(player, area) {
       player.hp = Math.min(player.maxHp, player.hp + d.n);
       addText(area, player.x, player.y - 24, `+${d.n} HP`, '#7ddb6a');
       sfx.pickup();
-    } else if (d.kind === 'gold') {
-      player.gold += d.n;
-      addText(area, player.x, player.y - 24, `+${d.n} 🪙`, '#f2c14e');
-      sfx.coin();
     }
   }
   area.drops = area.drops.filter((d) => !d.taken);

@@ -26,6 +26,9 @@ and **armor** you take from monsters.
 - **Stones feed the altar.** Monsters drop stones of random kinds. Feed
   your job's stones to the Altar of the Last Light and it makes crystals.
   Stones of another job cannot be used — trade them with Bram the merchant.
+- **Gear has a job.** Every armor piece belongs to one job: only that job
+  can wear it. Gear of another job breaks down into random stones —
+  1 for Common, 2 for Rare, 3 for Epic, 5 for Legendary.
 - **The mine is safe, but timed.** The crystal mine holds only stones for
   the altar, never crystals directly. Entry is limited to 1 hour a day.
 - **The dungeon has 20 floors.** Clear a floor to open the stairs down.
@@ -43,7 +46,7 @@ and **armor** you take from monsters.
 | Mouse + hold click | Attack toward the mouse (1 crystal) |
 | Q | Class skill (3 crystals) |
 | E | Use altar / trader / mine / doors / stairs |
-| I | Bag & equipment (click to equip) |
+| I | Bag & equipment (click own-job gear to equip, wrong-job gear to salvage) |
 | M | Mute |
 | R | Restart after death or victory |
 

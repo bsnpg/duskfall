@@ -1,7 +1,7 @@
 // Duskfall — entrypoint: state machine, game loop, HUD, town systems
 // (altar, trader, mine timer), dungeon progression and the ending.
 
-import { CLASSES, CLASS_IDS, STONES, CRYSTAL_PER_STONE, TRADE_RATE, statSummary } from './data.js';
+import { CLASSES, CLASS_IDS, STONES, CRYSTAL_PER_STONE, TRADE_RATE, SALVAGE_YIELD, rollArmor, statSummary } from './data.js';
 import { buildTown, buildMine, buildDungeonFloor, nearestObject, collide, TOWN, DUNGEON, MINE } from './world.js';
 import {
   createPlayer, effectiveStats, syncMaxHp, playerAttack, useSkill,
@@ -17,9 +17,9 @@ const ctx = canvas.getContext('2d');
 const $ = (id) => document.getElementById(id);
 const els = {
   hpFill: $('hpFill'), hpText: $('hpText'), xpFill: $('xpFill'), xpText: $('xpText'),
-  crystalPill: $('crystalPill'), floorPill: $('floorPill'), goldText: $('goldText'),
+  crystalPill: $('crystalPill'), floorPill: $('floorPill'), stonesTop: $('stonesTop'),
   mineText: $('mineText'), classPill: $('classPill'), gearPill: $('gearPill'),
-  stonePill: $('stonePill'), toast: $('toast'), prompt: $('prompt'),
+  toast: $('toast'), prompt: $('prompt'),
   title: $('titleScreen'), dead: $('deadScreen'), win: $('winScreen'),
   deadStats: $('deadStats'), winStats: $('winStats'),
   altarPanel: $('altarPanel'), traderPanel: $('traderPanel'), invPanel: $('invPanel'),
@@ -148,16 +148,13 @@ function openAltar() {
 function openTrader() {
   panel = 'trader';
   const own = player.cls.crystal;
-  let html = `<p>💰 Your gold: <b>${player.gold}</b> &nbsp;·&nbsp; Stones of your job (${STONES[own].name}): <b>${player.stones[own]}</b></p>`;
+  let html = `<p>Stones of your job (${STONES[own].name}): <b>${player.stones[own]}</b></p>`;
   for (const [kind, st] of Object.entries(STONES)) {
     if (kind === own) continue;
     const n = player.stones[kind];
     html += `<div class="row"><span>${st.icon} ${st.name}: <b>${n}</b></span>
-      <button data-trade="${kind}" ${n < TRADE_RATE ? 'disabled' : ''}>Trade ${TRADE_RATE} → 1 ${STONES[own].name}</button>
-      <button data-sell="${kind}" ${n < 1 ? 'disabled' : ''}>Sell 1 (+10 🪙)</button></div>`;
+      <button data-trade="${kind}" ${n < TRADE_RATE ? 'disabled' : ''}>Trade ${TRADE_RATE} → 1 ${STONES[own].name}</button></div>`;
   }
-  html += `<div class="row"><span>Buy 1 ${STONES[own].name}</span>
-    <button data-buy="1" ${player.gold < 25 ? 'disabled' : ''}>25 🪙</button></div>`;
   els.traderRows.innerHTML = html;
   els.traderRows.querySelectorAll('button[data-trade]').forEach((b) => {
     b.addEventListener('click', () => {
@@ -170,21 +167,6 @@ function openTrader() {
       openTrader(); updateHud();
     });
   });
-  els.traderRows.querySelectorAll('button[data-sell]').forEach((b) => {
-    b.addEventListener('click', () => {
-      const k = b.dataset.sell;
-      if (player.stones[k] < 1) return;
-      player.stones[k] -= 1; player.gold += 10;
-      sfx.coin(); openTrader(); updateHud();
-    });
-  });
-  els.traderRows.querySelectorAll('button[data-buy]').forEach((b) => {
-    b.addEventListener('click', () => {
-      if (player.gold < 25) return;
-      player.gold -= 25; player.stones[own] += 1;
-      sfx.coin(); openTrader(); updateHud();
-    });
-  });
   els.traderPanel.style.display = 'flex';
 }
 
@@ -194,12 +176,17 @@ function openInv() {
   let html = `<p>Effective stats: ATK <b>${st.atk}</b> · DEF <b>${st.def}</b> · HP <b>${player.hp}/${player.maxHp}</b> · CRIT <b>${Math.round(st.crit * 100)}%</b></p>`;
   html += '<p>Equipped:</p><div style="display:flex;gap:6px;flex-wrap:wrap">';
   for (const [slot, item] of Object.entries(player.equipped)) {
-    html += `<div class="slot" data-eq="${slot}">${slot.toUpperCase()}<br>${item ? `<span class="r-${item.rarity}">${item.name}</span><br>${statSummary(item.stats)}` : '— empty —'}</div>`;
+    html += `<div class="slot" data-eq="${slot}">${slot.toUpperCase()}<br>${item ? `<span class="r-${item.rarity}">${item.name}</span><br>${statSummary(item.stats)}<br><span style="color:#9d8fc4">${CLASSES[item.job].icon} ${CLASSES[item.job].name}</span>` : '— empty —'}</div>`;
   }
   html += '</div><p>Bag (click to equip):</p><div style="display:flex;gap:6px;flex-wrap:wrap">';
   if (!player.inventory.length) html += '<span style="color:#9d8fc4">Bag is empty — defeat monsters for armor drops.</span>';
   for (const item of player.inventory) {
-    html += `<div class="slot" data-item="${item.id}"><span class="r-${item.rarity}">${item.name}</span><br>${statSummary(item.stats)}</div>`;
+    const jobLine = `<br><span style="color:#9d8fc4">${CLASSES[item.job].icon} ${CLASSES[item.job].name}</span>`;
+    if (item.job === player.classId) {
+      html += `<div class="slot" data-item="${item.id}"><span class="r-${item.rarity}">${item.name}</span><br>${statSummary(item.stats)}${jobLine}</div>`;
+    } else {
+      html += `<div class="slot" data-salvage="${item.id}"><span class="r-${item.rarity}">${item.name}</span><br>${statSummary(item.stats)}${jobLine}<br><b style="color:#ffd94a">🔨 Salvage → ${SALVAGE_YIELD[item.rarity] || 1} 🪨 random</b></div>`;
+    }
   }
   html += '</div>';
   els.inv.innerHTML = html;
@@ -211,6 +198,13 @@ function openInv() {
       sfx.pickup(); openInv(); updateHud();
     });
   });
+  els.inv.querySelectorAll('[data-salvage]').forEach((el) => {
+    el.addEventListener('click', () => {
+      const item = player.inventory.find((i) => i.id === el.dataset.salvage);
+      if (!item) return;
+      salvageItem(item);
+    });
+  });
   els.inv.querySelectorAll('[data-eq]').forEach((el) => {
     el.addEventListener('click', () => {
       const item = player.equipped[el.dataset.eq];
@@ -220,6 +214,23 @@ function openInv() {
     });
   });
   els.invPanel.style.display = 'flex';
+}
+
+// Break down a wrong-job piece into random stones, scaled by rarity.
+function salvageItem(item) {
+  const n = SALVAGE_YIELD[item.rarity] || 1;
+  const kinds = Object.keys(STONES);
+  const gained = {};
+  for (let i = 0; i < n; i++) {
+    const k = kinds[Math.floor(Math.random() * kinds.length)];
+    player.stones[k] += 1;
+    gained[k] = (gained[k] || 0) + 1;
+  }
+  player.inventory = player.inventory.filter((i) => i !== item);
+  sfx.pickup();
+  const parts = Object.entries(gained).map(([k, c]) => `${STONES[k].icon}${c}`).join(' ');
+  toast(`🔨 ${item.name} → +${n} 🪨 (${parts})`);
+  openInv(); updateHud();
 }
 
 // ---- run flow -------------------------------------------------------------
@@ -322,13 +333,12 @@ function updateHud() {
   els.xpText.textContent = `Lv ${player.level}`;
   els.crystalPill.innerHTML = `${player.cls.crystalIcon} ${player.cls.crystalName} <b>${player.crystals}</b>`;
   els.floorPill.textContent = area.kind === TOWN ? '🏠 Last Town' : area.kind === MINE ? '⛏️ Mine' : `🌀 Floor ${area.floor}/20`;
-  els.goldText.textContent = player.gold;
   els.mineText.textContent = fmtTime(mineLeft());
   els.classPill.textContent = `${player.cls.icon} ${player.cls.name} · ATK ${st.atk} · DEF ${st.def}`;
   const eq = player.equipped;
   els.gearPill.textContent = `⚔️ ${eq.weapon ? eq.weapon.name : '—'} · 🛡️ ${eq.armor ? eq.armor.name : '—'} · ✨ ${eq.charm ? eq.charm.name : '—'}`;
   const stones = Object.entries(player.stones).map(([k, n]) => `${STONES[k].icon}${n}`).join(' ');
-  els.stonePill.textContent = `🪨 ${stones}${player.hasDawnStone ? ' · ☀️ Last Stone' : ''}`;
+  els.stonesTop.innerHTML = `🪨 ${stones}${player.hasDawnStone ? ' · ☀️ Last Stone' : ''}`;
   if (player.crystals === 0) els.crystalPill.style.borderColor = '#ff5a5a';
   else els.crystalPill.style.borderColor = '';
 }
@@ -423,7 +433,7 @@ function stageScene(scene) {
   if (scene === 'win' || scene === 'dead') {
     player = createPlayer(rng);
     player.level = 14; player.kills = 187; player.floorsCleared = 20;
-    player.crystals = 12; player.gold = 340;
+    player.crystals = 12;
     player.stones = { speed: 3, str: 2, magic: 4, life: 1 };
     player.hasDawnStone = true;
     runStartedAt = performance.now() - 42 * 60000;
@@ -437,7 +447,7 @@ function stageScene(scene) {
   if (scene === 'title') return; // default title screen
   player = createPlayer(rng);
   syncMaxHp(player, 0);
-  player.crystals = 18; player.gold = 120; player.level = 5; player.kills = 23;
+  player.crystals = 18; player.level = 5; player.kills = 23;
   player.stones = { speed: 4, str: 2, magic: 1, life: 3 };
   player.inventory = [];
   runStartedAt = performance.now() - 9 * 60000;
@@ -447,6 +457,15 @@ function stageScene(scene) {
     area = buildTown();
     player.x = 15 * 32; player.y = 8 * 32;
     if (scene === 'altar') openAltar();
+  } else if (scene === 'bag') {
+    // Staged bag demo: one own-job piece, two wrong-job pieces (one rare).
+    area = buildTown();
+    player.x = 15 * 32; player.y = 8 * 32;
+    player.inventory = [rollArmor(rng, 6), rollArmor(rng, 6), rollArmor(rng, 6)];
+    player.inventory[0].job = player.classId;
+    player.inventory[1].job = CLASS_IDS.find((id) => id !== player.classId);
+    player.inventory[1].rarity = 'rare';
+    openInv();
   } else if (scene === 'mine') {
     area = buildMine(rng);
     player.x = 15 * 32; player.y = 9 * 32;
@@ -467,7 +486,7 @@ function stageScene(scene) {
       m.hitCd = 1.5; m.shootCd = 2; m.flash = 0;
     });
     area.drops.push({ x: 14 * 32, y: 9 * 32, kind: 'stone', stone: 'magic', n: 2, r: 10 });
-    area.drops.push({ x: 10 * 32, y: 8 * 32, kind: 'gold', n: 12, r: 8 });
+    area.drops.push({ x: 10 * 32, y: 8 * 32, kind: 'stone', stone: 'str', n: 2, r: 10 });
   }
   updateHud();
 }

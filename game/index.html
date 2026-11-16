@@ -64,7 +64,7 @@
     <div class="bar xp"><i id="xpFill" style="width:0%"></i><span id="xpText">Lv 1</span></div>
     <span class="pill" id="crystalPill">🔷 Crystal <b>0</b></span>
     <span class="pill" id="floorPill">🏠 Town</span>
-    <span class="pill">🪙 <b id="goldText">0</b></span>
+    <span class="pill" id="stonesTop">🪨 —</span>
     <span class="pill">⏳ Mine <b id="mineText">60:00</b></span>
   </div>
 
@@ -74,7 +74,6 @@
   <div class="hud" id="hudBottom">
     <span id="classPill">—</span>
     <span id="gearPill">⚔️ — 🛡️ — ✨ —</span>
-    <span id="stonePill">🪨 —</span>
     <span><kbd>WASD</kbd> move · <kbd>Click</kbd> attack · <kbd>Q</kbd> skill · <kbd>E</kbd> use · <kbd>I</kbd> bag · <kbd>M</kbd> sound</span>
   </div>
 
@@ -83,7 +82,8 @@
     <p><b>Altar of the Last Light</b></p>
     <p>Darkness is coming. Four chosen ones receive extraordinary talents — but no one
        may choose their own. Your power is drawn the moment you step in. Your stats are
-       random. What makes you strong is only the <b>equipment</b> and <b>armor</b> you rip from monsters.</p>
+       random. What makes you strong is only the <b>equipment</b> and <b>armor</b> you rip from monsters.
+       Gear of another job breaks down into random stones.</p>
     <p>Your power lives on the <b>crystal</b> of your job. Out of crystals, you cannot fight.
        Stones from monsters and the mine wake the altar — and the altar wakes your crystals.
        Defeat the <b>Demon King of Darkness on floor 20</b>, claim the Last Stone, and light the altar
@@ -122,7 +122,7 @@
   <div class="panel" id="traderPanel">
     <div class="box">
       <h2>🧳 Stone Merchant — Bram</h2>
-      <p>"Wrong-job stones? Bring them here. Any two stones I trade for one stone of your job. Or sell stones, buy what you need."</p>
+      <p>"Wrong-job stones? Bring them here. Any two stones I trade for one stone of your job."</p>
       <div id="traderRows"></div>
       <div class="row"><button id="traderClose" class="ghost">Close (E)</button></div>
     </div>
@@ -131,7 +131,7 @@
   <div class="panel" id="invPanel">
     <div class="box">
       <h2>🎒 Bag &amp; Equipment</h2>
-      <p>Click equipment to equip / unequip. Armor and weapons raise your random stats.</p>
+      <p>Click equipment of your job to equip / unequip. Gear of another job can only be salvaged into random stones.</p>
       <div id="inv"></div>
       <div class="row"><button id="invClose" class="ghost">Close (I)</button></div>
     </div>

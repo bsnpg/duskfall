@@ -119,11 +119,6 @@ function drawDrop(ctx, d, now) {
   } else if (d.kind === 'heart') {
     ctx.font = '16px sans-serif'; ctx.textAlign = 'center';
     ctx.fillText('❤️', 0, 6);
-  } else if (d.kind === 'gold') {
-    ctx.fillStyle = '#f2c14e';
-    ctx.beginPath(); ctx.arc(0, 0, 7, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#7a5510'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText('G', 0, 3);
   }
   ctx.restore();
 }

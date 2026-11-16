@@ -98,6 +98,9 @@ const CHARM_NAMES = ['Lantern', 'Ring', 'Necklace', 'Bracelet', 'Sigil'];
 const PREFIX = ['Twilight', 'Gloom', 'Ember', 'Dawn', 'Shadow', 'Dusk', 'Rune', 'Vow'];
 const SUFFIX = ['of the Guardian', 'of the Hunter', 'the Last', 'of the Lost', 'of the Brave', 'of the Chosen'];
 
+// Salvage: gear of another job breaks down into random stones, scaled by rarity.
+export const SALVAGE_YIELD = { common: 1, rare: 2, epic: 3, legend: 5 };
+
 export function rollStats(rng) {
   return {
     hp: 40 + Math.floor(rng() * 60),
@@ -122,6 +125,9 @@ export function rollArmor(rng, floor) {
   const pick = (arr) => arr[Math.floor(rng() * arr.length)];
   const base = slot === 'weapon' ? pick(WEAPON_NAMES) : slot === 'armor' ? pick(ARMOR_NAMES) : pick(CHARM_NAMES);
   const name = `${pick(PREFIX)} ${base} ${pick(SUFFIX)}`;
+  // Every piece belongs to one job: only that job can wear it. Anything else
+  // is salvage — broken down into random stones.
+  const job = CLASS_IDS[Math.floor(rng() * CLASS_IDS.length)];
   const stats = {};
   const keys = ['atk', 'def', 'hp', 'crit'];
   const nStats = 1 + (rarity === 'rare' ? 1 : 0) + (rarity === 'epic' ? 1 : 0) + (rarity === 'legend' ? 2 : 0);
@@ -132,7 +138,7 @@ export function rollArmor(rng, floor) {
     else if (k === 'def') stats.def = (stats.def || 0) + Math.round((1 + rng() * 3) * mult);
     else stats.crit = (stats.crit || 0) + Math.round((2 + rng() * 4) * mult) / 100;
   }
-  return { id: 'eq' + Math.floor(rng() * 1e9).toString(36), name, slot, rarity, stats, floor };
+  return { id: 'eq' + Math.floor(rng() * 1e9).toString(36), name, slot, rarity, stats, floor, job };
 }
 
 export function statSummary(stats) {
