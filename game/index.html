@@ -3,13 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
 <title>Duskfall — Altar of the Last Light</title>
 <style>
   :root { --gold: #f2c14e; --ink: #0d0a14; --panel: rgba(16, 12, 28, 0.92); --line: #4a3560; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { background: #07050d; color: #e8e0f5; font-family: "Trebuchet MS", Verdana, sans-serif; height: 100%; overflow: hidden; }
-  #wrap { position: relative; width: 960px; height: 600px; margin: 0 auto; top: 50%; transform: translateY(-50%); }
-  canvas { display: block; width: 960px; height: 600px; background: #0d0a14; border: 2px solid var(--line); border-radius: 8px; }
+  #wrap { position: relative; width: 1280px; height: 720px; margin: 0 auto; top: 50%; transform: translateY(-50%); }
+  canvas { display: block; width: 1280px; height: 720px; background: #0d0a14; border: 2px solid var(--line); border-radius: 8px; }
   .hud { position: absolute; left: 0; right: 0; display: flex; gap: 8px; align-items: center; padding: 6px 10px;
          background: linear-gradient(rgba(10, 6, 20, 0.88), rgba(10, 6, 20, 0.55)); font-size: 13px; pointer-events: none; z-index: 5; }
   #hudTop { top: 0; border-radius: 8px 8px 0 0; }
@@ -51,13 +52,22 @@
   .slot { width: 64px; min-height: 54px; background: #1c1330; border: 1px solid var(--line); border-radius: 6px; padding: 4px; font-size: 10px; line-height: 1.35; cursor: pointer; }
   .slot:hover { border-color: var(--gold); }
   .slot .r-common { color: #cfc4e8; } .slot .r-rare { color: #5aa2ff; } .slot .r-epic { color: #c07bff; } .slot .r-legend { color: #ffb340; }
+  #goalBar { position: absolute; top: 42px; left: 0; right: 0; text-align: center; font-size: 13px; font-weight: bold;
+            color: var(--gold); text-shadow: 0 1px 3px #000; z-index: 5; pointer-events: none; display: none; }
+  #bossBar { position: absolute; top: 66px; left: 50%; transform: translateX(-50%); width: 460px; z-index: 5;
+             display: none; flex-direction: column; align-items: center; gap: 3px; pointer-events: none; }
+  #bossBar .bar { width: 460px; height: 14px; }
+  #bossBar .bar > i { background: linear-gradient(90deg, #8b1030, #ff2e63); }
+  #bossText { font-size: 12px; font-weight: bold; color: #ffb3c2; text-shadow: 0 1px 3px #000; }
+  .blessBtn { display: block; width: 100%; text-align: left; margin-top: 10px; padding: 12px 16px; font-size: 14px; }
+  .blessBtn span { font-weight: normal; font-size: 13px; color: #241503; }
   #err { position: absolute; bottom: 0; left: 0; color: #ff6b6b; font-size: 11px; z-index: 20; background: rgba(0,0,0,0.7); padding: 2px 6px; display: none; }
   kbd { background: #241a33; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; font-family: inherit; }
 </style>
 </head>
 <body>
 <div id="wrap">
-  <canvas id="game" width="960" height="600"></canvas>
+  <canvas id="game" width="1280" height="720"></canvas>
 
   <div class="hud" id="hudTop">
     <div class="bar"><i id="hpFill" style="width:100%"></i><span id="hpText">HP 100/100</span></div>
@@ -67,6 +77,9 @@
     <span class="pill" id="stonesTop">🪨 —</span>
     <span class="pill">⏳ Mine <b id="mineText">60:00</b></span>
   </div>
+
+  <div id="goalBar"></div>
+  <div id="bossBar"><span id="bossText"></span><div class="bar"><i id="bossFill" style="width:100%"></i></div></div>
 
   <div id="toast"></div>
   <div id="prompt"></div>
@@ -125,6 +138,14 @@
       <p>"Wrong-job stones? Bring them here. Any two stones I trade for one stone of your job."</p>
       <div id="traderRows"></div>
       <div class="row"><button id="traderClose" class="ghost">Close (E)</button></div>
+    </div>
+  </div>
+
+  <div class="panel" id="blessPanel">
+    <div class="box">
+      <h2>✨ Level Up — Choose a Blessing</h2>
+      <p>Your talent grows. Choose <b>one</b> blessing — it lasts for the whole run.</p>
+      <div id="blessRows"></div>
     </div>
   </div>
 

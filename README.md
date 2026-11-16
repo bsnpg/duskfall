@@ -34,9 +34,11 @@ and **armor** you take from monsters.
 - **The dungeon has 20 floors.** Clear a floor to open the stairs down.
   Mini-bosses wait every 5 floors. You may always retreat to town to
   refuel — running dry on floor 20 with no way out is how heroes die.
+  Every level-up offers a choice of 3 blessings — pick one, it lasts the run.
 - **The ending.** Defeat the Demon King of Darkness on floor 20, take the
   Last Stone back to the altar, and light it perfectly so the darkness is
-  erased from the earth.
+  erased from the earth. The goal is printed on the screen while you play,
+  and the Demon King gets his own health bar on floor 20.
 
 ## Controls
 

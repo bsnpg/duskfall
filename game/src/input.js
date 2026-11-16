@@ -1,7 +1,7 @@
 // Duskfall — keyboard + mouse input, kept in one small module.
 
 export const keys = {};
-export const mouse = { x: 480, y: 300, down: false, clicked: false, rightClicked: false };
+export const mouse = { x: 640, y: 360, down: false, clicked: false, rightClicked: false };
 let onKey = null;
 
 export function bindInput(canvas, keyHandler) {

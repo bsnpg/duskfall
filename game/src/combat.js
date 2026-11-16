@@ -1,9 +1,13 @@
 // Duskfall — combat: the player, attacks, class skills, monster AI,
 // drops, XP and equipment. Crystals are the fuel of every fight.
 
-import { CLASSES, CLASS_IDS, STONES, CRYSTAL_PER_STONE, rollStats, rollArmor, makeRng } from './data.js';
+import { CLASSES, CLASS_IDS, STONES, CRYSTAL_PER_STONE, VIEW_W, VIEW_H, rollStats, rollArmor, makeRng } from './data.js';
 import { collide, randomFreeSpot } from './world.js';
 import { sfx } from './audio.js';
+
+// Pending level-up blessings, counted here so the main loop can open the
+// choice panel once the current frame's combat has settled.
+export const levelUps = { count: 0 };
 
 export function createPlayer(rng) {
   const classId = CLASS_IDS[Math.floor(rng() * CLASS_IDS.length)];
@@ -72,6 +76,7 @@ export function gainXp(player, amount, now) {
     player.baseStats.atk += 2;
     player.baseStats.def += 1;
     leveled = true;
+    levelUps.count += 1;
   }
   if (leveled) {
     syncMaxHp(player, now);
@@ -333,13 +338,17 @@ export function updateProjectiles(area, player, dt, now) {
     }
     p.x += p.vx * dt;
     p.y += p.vy * dt;
-    if (p.x < 20 || p.x > 940 || p.y < 20 || p.y > 580) { p.life = 0; continue; }
+    if (p.x < 20 || p.x > VIEW_W - 20 || p.y < 20 || p.y > VIEW_H - 20) { p.life = 0; continue; }
     if (p.from === 'player') {
       for (const m of area.monsters) {
         if (m.dead) continue;
         if (Math.hypot(m.x - p.x, m.y - p.y) < m.r + p.r) {
-          damageMonster(area, player, m, p.dmg, p.crit, now);
-          if (p.pierce > 0) { p.pierce -= 1; } else { p.life = 0; }
+          // A staged visual burst (dmg 0) flashes the monster without
+          // hurting it; real attacks always carry damage.
+          if (p.dmg > 0) {
+            damageMonster(area, player, m, p.dmg, p.crit, now);
+            if (p.pierce > 0) { p.pierce -= 1; } else { p.life = 0; }
+          } else { p.life = 0; }
           break;
         }
       }

@@ -1,11 +1,11 @@
 // Duskfall — entrypoint: state machine, game loop, HUD, town systems
 // (altar, trader, mine timer), dungeon progression and the ending.
 
-import { CLASSES, CLASS_IDS, STONES, CRYSTAL_PER_STONE, TRADE_RATE, SALVAGE_YIELD, rollArmor, statSummary } from './data.js';
+import { CLASSES, CLASS_IDS, STONES, CRYSTAL_PER_STONE, TRADE_RATE, SALVAGE_YIELD, BLESSINGS, rollArmor, statSummary } from './data.js';
 import { buildTown, buildMine, buildDungeonFloor, nearestObject, collide, TOWN, DUNGEON, MINE } from './world.js';
 import {
   createPlayer, effectiveStats, syncMaxHp, playerAttack, useSkill,
-  updateMonsters, updateProjectiles, updateFx, collectDrops, equipItem,
+  updateMonsters, updateProjectiles, updateFx, collectDrops, equipItem, levelUps,
 } from './combat.js';
 import { render } from './render.js';
 import { bindInput, keys, mouse, axis, consumeClick } from './input.js';
@@ -23,6 +23,8 @@ const els = {
   title: $('titleScreen'), dead: $('deadScreen'), win: $('winScreen'),
   deadStats: $('deadStats'), winStats: $('winStats'),
   altarPanel: $('altarPanel'), traderPanel: $('traderPanel'), invPanel: $('invPanel'),
+  blessPanel: $('blessPanel'), blessRows: $('blessRows'),
+  goalBar: $('goalBar'), bossBar: $('bossBar'), bossFill: $('bossFill'), bossText: $('bossText'),
   hudTop: $('hudTop'), hudBottom: $('hudBottom'),
   altarRows: $('altarRows'), traderRows: $('traderRows'), inv: $('inv'),
 };
@@ -78,7 +80,7 @@ function score() {
 // ---- area transitions -----------------------------------------------------
 function goTown() {
   area = buildTown();
-  player.x = 15 * 32; player.y = 10 * 32;
+  player.x = 20 * 32; player.y = 10 * 32;
   startMusic('town');
   updateHud();
 }
@@ -94,7 +96,7 @@ function enterDungeon(floor) {
 function enterMine() {
   if (mineLeft() <= 0) { toast('⛏️ The mine is closed for today. Entry is limited to 1 hour a day.'); return; }
   area = buildMine(Math.random);
-  player.x = 15 * 32; player.y = 15 * 32;
+  player.x = 20 * 32; player.y = 15 * 32;
   startMusic('town');
   toast('⛏️ Crystal Mine — a safe zone. Click ore to mine stones.');
   updateHud();
@@ -108,6 +110,45 @@ function closePanels() {
   els.altarPanel.style.display = 'none';
   els.traderPanel.style.display = 'none';
   els.invPanel.style.display = 'none';
+  els.blessPanel.style.display = 'none';
+}
+
+// Level up: pick 1 of 3 blessings. The game waits — nothing moves while
+// the player chooses, and there is no way to close it without choosing.
+function openBlessing() {
+  panel = 'blessing';
+  const pool = [...BLESSINGS];
+  const picks = [];
+  while (picks.length < 3 && pool.length) {
+    picks.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+  }
+  els.blessRows.innerHTML = '';
+  for (const b of picks) {
+    const btn = document.createElement('button');
+    btn.className = 'blessBtn';
+    btn.innerHTML = `<b>${b.name}</b><br><span>${b.desc}</span>`;
+    btn.addEventListener('click', () => {
+      applyBlessing(b.id);
+      levelUps.count -= 1;
+      sfx.levelup();
+      if (levelUps.count > 0 && player.hp > 0) openBlessing();
+      else { closePanels(); updateHud(); }
+    });
+    els.blessRows.appendChild(btn);
+  }
+  els.blessPanel.style.display = 'flex';
+}
+
+function applyBlessing(id) {
+  if (id === 'might') player.baseStats.atk += 4;
+  else if (id === 'vitality') { player.baseStats.hp += 35; syncMaxHp(player, performance.now() / 1000); player.hp = Math.min(player.maxHp, player.hp + 35); }
+  else if (id === 'ward') player.baseStats.def += 3;
+  else if (id === 'keen') player.baseStats.crit = Math.min(0.6, player.baseStats.crit + 0.08);
+  else if (id === 'swift') player.baseStats.speed = Math.min(4.5, player.baseStats.speed + 0.3);
+  else if (id === 'hoard') player.crystals += 12;
+  else if (id === 'secondwind') player.hp = player.maxHp;
+  syncMaxHp(player, performance.now() / 1000);
+  toast(`✨ Blessing: ${BLESSINGS.find((b) => b.id === id).name}`);
 }
 
 function openAltar() {
@@ -341,6 +382,20 @@ function updateHud() {
   els.stonesTop.innerHTML = `🪨 ${stones}${player.hasDawnStone ? ' · ☀️ Last Stone' : ''}`;
   if (player.crystals === 0) els.crystalPill.style.borderColor = '#ff5a5a';
   else els.crystalPill.style.borderColor = '';
+  // The goal, printed on the screen itself: the win path is always visible.
+  if (player.hasDawnStone) els.goalBar.textContent = '☀️ GOAL: Carry the Last Stone back to the Altar of Light — light it perfectly!';
+  else if (area.kind === DUNGEON && area.floor === 20) els.goalBar.textContent = '👑 GOAL: Slay the Demon King of Darkness — then take the Last Stone to the altar!';
+  else if (area.kind === DUNGEON) els.goalBar.textContent = `⚔️ GOAL: Clear Floor ${area.floor}/20 — then beat the Demon King on Floor 20 and light the altar!`;
+  else if (area.kind === MINE) els.goalBar.textContent = '⛏️ GOAL: Mine stones — feed them to the altar for crystals, then fight on!';
+  else els.goalBar.textContent = '⚔️ GOAL: Reach Floor 20 · Defeat the Demon King · Bring the Last Stone to the Altar';
+  // Boss bar, only on floor 20 while the Demon King lives.
+  const boss = area.kind === DUNGEON && area.floor === 20
+    ? area.monsters.find((m) => m.kind === 'boss' && !m.dead) : null;
+  if (boss) {
+    els.bossBar.style.display = 'flex';
+    els.bossFill.style.width = `${Math.max(0, (boss.hp / boss.maxHp) * 100)}%`;
+    els.bossText.textContent = `👑 DEMON KING OF DARKNESS — ${Math.max(0, Math.ceil(boss.hp))} / ${boss.maxHp} HP`;
+  } else els.bossBar.style.display = 'none';
 }
 
 // ---- main loop ------------------------------------------------------------
@@ -353,8 +408,41 @@ function frame(t) {
   const inPlay = mode === 'play';
   els.hudTop.style.display = inPlay ? 'flex' : 'none';
   els.hudBottom.style.display = inPlay ? 'flex' : 'none';
-  if (!player || mode !== 'play') { render(ctx, area, player || { x: 480, y: 300, r: 15, hp: 1, cls: CLASSES.knight, level: 1, buffUntil: 0, hurtCd: 0, aim: 0 }, now); return; }
+  els.goalBar.style.display = inPlay ? 'block' : 'none';
+  if (!inPlay) els.bossBar.style.display = 'none';
+  if (!player || mode !== 'play') { render(ctx, area, player || { x: 640, y: 360, r: 15, hp: 1, cls: CLASSES.knight, level: 1, buffUntil: 0, hurtCd: 0, aim: 0 }, now); return; }
   if (panel) { render(ctx, area, player, now); return; }
+
+  // Staged scenes keep a visual burst going (dmg-0 arrows + floating
+  // numbers) so a screenshot taken at any moment shows the fight alive.
+  if (area.stagedBurst) {
+    area.burstCd = (area.burstCd ?? 0.5) - dt;
+    if (area.burstCd <= 0) {
+      area.burstCd = 0.6;
+      const alive = area.monsters.filter((m) => !m.dead);
+      if (alive.length) {
+        // Aim the fan at the nearest monster, so the burst reads as one
+        // volley instead of stray dots. Numbers float below the target,
+        // clear of the boss's crown.
+        let t = alive[0], best = Infinity;
+        for (const m of alive) {
+          const d = Math.hypot(m.x - player.x, m.y - player.y);
+          if (d < best) { best = d; t = m; }
+        }
+        const ang = Math.atan2(t.y - player.y, t.x - player.x);
+        const color = player.classId === 'archer' ? '#a8ff7a' : player.classId === 'mage' ? '#c07bff' : '#e8b13c';
+        for (let i = -2; i <= 2; i++) {
+          const a = ang + i * 0.16;
+          area.projectiles.push({
+            x: player.x, y: player.y, vx: Math.cos(a) * 560, vy: Math.sin(a) * 560,
+            r: 9, dmg: 0, crit: false, from: 'player', color, life: 1.1, pierce: 0,
+          });
+        }
+        area.texts.push({ x: t.x, y: t.y + t.r + 18, text: String(24 + Math.floor(Math.random() * 30)), color: '#fff', life: 0.9 });
+        area.texts.push({ x: t.x + 26, y: t.y + t.r + 32, text: `CRIT ${52 + Math.floor(Math.random() * 20)}`, color: '#ffd94a', life: 0.9 });
+      }
+    }
+  }
 
   // Mine timer only ticks while inside the mine.
   if (area.kind === MINE) {
@@ -395,6 +483,9 @@ function frame(t) {
   updateFx(area, dt);
   collectDrops(player, area);
 
+  // A level-up waits for the frame to settle, then offers a blessing.
+  if (levelUps.count > 0 && player.hp > 0) { openBlessing(); render(ctx, area, player, now); return; }
+
   // Interaction prompt
   const o = nearestObject(area, player.x, player.y);
   showPrompt(o ? o.label : null);
@@ -413,6 +504,7 @@ function onKey(k) {
   if (mode === 'title' && (k === 'enter' || k === ' ')) { startRun(); return; }
   if ((mode === 'dead' || mode === 'win') && k === 'r') { startRun(); return; }
   if (mode !== 'play' || !player) return;
+  if (panel === 'blessing') return; // a blessing must be chosen, not dismissed
   if (k === 'e') {
     if (panel) closePanels();
     else interact();
@@ -426,8 +518,8 @@ function onKey(k) {
 }
 
 // ---- staged scenes for honest screenshots ---------------------------------
-// ?scene=title|town|dungeon|mine|altar|win|dead renders a real state of the
-// game's own code, so the screenshots show the start, the loop and the end.
+// ?scene=title|town|dungeon|boss|mine|altar|bag|win|dead renders a real state
+// of the game's own code, so the screenshots show the start, the loop and the end.
 function stageScene(scene) {
   const rng = (() => { let s = 42; return () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; })();
   if (scene === 'win' || scene === 'dead') {
@@ -455,12 +547,12 @@ function stageScene(scene) {
   els.title.style.display = 'none';
   if (scene === 'town' || scene === 'altar') {
     area = buildTown();
-    player.x = 15 * 32; player.y = 8 * 32;
+    player.x = 20 * 32; player.y = 8 * 32;
     if (scene === 'altar') openAltar();
   } else if (scene === 'bag') {
     // Staged bag demo: one own-job piece, two wrong-job pieces (one rare).
     area = buildTown();
-    player.x = 15 * 32; player.y = 8 * 32;
+    player.x = 20 * 32; player.y = 8 * 32;
     player.inventory = [rollArmor(rng, 6), rollArmor(rng, 6), rollArmor(rng, 6)];
     player.inventory[0].job = player.classId;
     player.inventory[1].job = CLASS_IDS.find((id) => id !== player.classId);
@@ -468,25 +560,53 @@ function stageScene(scene) {
     openInv();
   } else if (scene === 'mine') {
     area = buildMine(rng);
-    player.x = 15 * 32; player.y = 9 * 32;
+    player.x = 20 * 32; player.y = 15 * 32;
+  } else if (scene === 'boss') {
+    // The climax, staged live: floor 20, the Demon King on his throne with
+    // two shadows, the player mid-burst. The boss bar and goal strip show.
+    player.level = 14; player.kills = 187; player.floorsCleared = 19;
+    player.crystals = 40;
+    player.stones = { speed: 3, str: 2, magic: 4, life: 1 };
+    runStartedAt = performance.now() - 42 * 60000;
+    area = buildDungeonFloor(20);
+    player.x = 20 * 32; player.y = 13 * 32;
+    player.hp = player.maxHp;
+    const boss = area.monsters[0];
+    boss.hp = Math.round(boss.maxHp * 0.62);
+    area.monsters.push({
+      kind: 'monster', type: 'wisp', name: 'Demon Shadow', x: 16 * 32, y: 9 * 32,
+      r: 14, color: '#ff2e63', hp: 40, maxHp: 40, atk: 14, speed: 0,
+      xp: 10, hitCd: 99, flash: 0, dead: false, ranged: true, shootCd: 1.5,
+    });
+    area.monsters.push({
+      kind: 'monster', type: 'wisp', name: 'Demon Shadow', x: 24 * 32, y: 9 * 32,
+      r: 14, color: '#ff2e63', hp: 40, maxHp: 40, atk: 14, speed: 0,
+      xp: 10, hitCd: 99, flash: 0, dead: false, ranged: true, shootCd: 1.5,
+    });
+    area.drops.push({ x: 22 * 32, y: 12 * 32, kind: 'stone', stone: 'magic', n: 2, r: 10 });
+    area.drops.push({ x: 17 * 32, y: 12 * 32, kind: 'heart', n: 30, r: 9 });
+    area.stagedBurst = true; area.burstCd = 0.2;
   } else {
     area = buildDungeonFloor(6);
-    player.x = 12 * 32; player.y = 10 * 32;
+    player.x = 20 * 32; player.y = 11 * 32;
     player.hp = player.maxHp;
     // Stage a live mid-fight moment: a ring of monsters closing in, close
     // enough to read inside the dungeon light, far enough that the player
     // cannot die before the screenshot is taken.
-    const ring = area.monsters.filter((m) => !m.dead).slice(0, 7);
+    const ring = area.monsters.filter((m) => !m.dead).slice(0, 9);
     area.monsters = ring;
     ring.forEach((m, i) => {
       const a = (i / ring.length) * Math.PI * 2;
-      const d = 150 + (i % 3) * 30;
+      const d = 130 + (i % 3) * 30;
       m.x = player.x + Math.cos(a) * d;
       m.y = player.y + Math.sin(a) * d;
-      m.hitCd = 1.5; m.shootCd = 2; m.flash = 0;
+      // Pinned in place for the shot: staged monsters hold the ring and
+      // cannot pile onto the player or hurt them before the screenshot.
+      m.speed = 0; m.hitCd = 99; m.shootCd = 2; m.flash = 0;
     });
-    area.drops.push({ x: 14 * 32, y: 9 * 32, kind: 'stone', stone: 'magic', n: 2, r: 10 });
-    area.drops.push({ x: 10 * 32, y: 8 * 32, kind: 'stone', stone: 'str', n: 2, r: 10 });
+    area.drops.push({ x: 22 * 32, y: 10 * 32, kind: 'stone', stone: 'magic', n: 2, r: 10 });
+    area.drops.push({ x: 18 * 32, y: 9 * 32, kind: 'stone', stone: 'str', n: 2, r: 10 });
+    area.stagedBurst = true; area.burstCd = 0.2;
   }
   updateHud();
 }

@@ -7,8 +7,9 @@ export const TOWN = 'town';
 export const DUNGEON = 'dungeon';
 export const MINE = 'mine';
 
-const W = Math.floor(VIEW_W / TILE); // 30
-const H = Math.floor(VIEW_H / TILE); // 18
+const W = Math.floor(VIEW_W / TILE); // 40
+const H = Math.floor(VIEW_H / TILE); // 22
+const CX = Math.floor(W / 2); // 20 — centre column of the wider room
 
 function borderSolids() {
   return [
@@ -23,17 +24,23 @@ export function buildTown() {
     solids: [
       ...borderSolids(),
       { x: 4, y: 3, w: 4, h: 3 },   // house west
-      { x: 22, y: 3, w: 4, h: 3 },  // house east
-      { x: 13, y: 2, w: 4, h: 2 },  // altar dais base
+      { x: 32, y: 3, w: 4, h: 3 },  // house east
+      { x: CX - 2, y: 2, w: 4, h: 2 },  // altar dais base
     ],
     objects: [
-      { id: 'altar', x: 15 * TILE, y: 3.2 * TILE, r: 44, label: 'Altar of Light (E)' },
-      { id: 'trader', x: 24 * TILE, y: 5 * TILE, r: 40, label: 'Merchant Bram (E)' },
+      { id: 'altar', x: CX * TILE, y: 3.2 * TILE, r: 44, label: 'Altar of Light (E)' },
+      { id: 'trader', x: 34 * TILE, y: 5 * TILE, r: 40, label: 'Merchant Bram (E)' },
       { id: 'mineDoor', x: 2 * TILE, y: 9 * TILE, r: 42, label: 'Crystal Mine (E)' },
-      { id: 'dungeonDoor', x: 15 * TILE, y: 16 * TILE, r: 46, label: 'Enter Dungeon (E)' },
+      { id: 'dungeonDoor', x: CX * TILE, y: 16 * TILE, r: 46, label: 'Enter Dungeon (E)' },
     ],
     nodes: [],
     monsters: [], drops: [], projectiles: [], particles: [], texts: [],
+    decor: [
+      { kind: 'lantern', x: 8 * TILE, y: 8 * TILE }, { kind: 'lantern', x: 32 * TILE, y: 8 * TILE },
+      { kind: 'flower', x: 10 * TILE, y: 14 * TILE }, { kind: 'flower', x: 11 * TILE, y: 14 * TILE },
+      { kind: 'flower', x: 29 * TILE, y: 14 * TILE }, { kind: 'flower', x: 30 * TILE, y: 13 * TILE },
+      { kind: 'flower', x: 6 * TILE, y: 16 * TILE }, { kind: 'rubble', x: 26 * TILE, y: 18 * TILE },
+    ],
   };
 }
 
@@ -41,7 +48,7 @@ export function buildMine(rng) {
   const nodes = [];
   for (let i = 0; i < 9; i++) {
     nodes.push({
-      x: (3 + rng() * 24) * TILE, y: (3 + rng() * 12) * TILE,
+      x: (3 + rng() * 32) * TILE, y: (3 + rng() * 16) * TILE,
       hp: 3, maxHp: 3, kind: 'ore', respawn: 0,
     });
   }
@@ -52,9 +59,14 @@ export function buildMine(rng) {
       { x: 7, y: 6, w: 2, h: 2 }, { x: 19, y: 10, w: 3, h: 2 }, { x: 12, y: 12, w: 2, h: 2 },
     ],
     objects: [
-      { id: 'mineExit', x: 15 * TILE, y: 16.5 * TILE, r: 46, label: 'Leave Mine (E)' },
+      { id: 'mineExit', x: CX * TILE, y: 19.5 * TILE, r: 46, label: 'Leave Mine (E)' },
     ],
     nodes, monsters: [], drops: [], projectiles: [], particles: [], texts: [],
+    decor: [
+      { kind: 'crystal', x: 5 * TILE, y: 4 * TILE }, { kind: 'crystal', x: 34 * TILE, y: 5 * TILE },
+      { kind: 'crystal', x: 30 * TILE, y: 17 * TILE }, { kind: 'rubble', x: 9 * TILE, y: 17 * TILE },
+      { kind: 'rubble', x: 24 * TILE, y: 4 * TILE }, { kind: 'lantern', x: CX * TILE, y: 18 * TILE },
+    ],
   };
 }
 
@@ -74,7 +86,16 @@ export function buildDungeonFloor(floor) {
   // A few pillars, never on the spawn row.
   const pillars = 3 + Math.floor(rng() * 3);
   for (let i = 0; i < pillars; i++) {
-    solids.push({ x: 3 + Math.floor(rng() * 22), y: 3 + Math.floor(rng() * 10), w: 2, h: 2 });
+    solids.push({ x: 3 + Math.floor(rng() * 30), y: 3 + Math.floor(rng() * 14), w: 2, h: 2 });
+  }
+  // Floor dressing: torches on the walls, rubble and stray crystals, so a
+  // floor never reads as bare checkerboard. Seeded, so a floor is stable.
+  const decor = [];
+  for (let i = 0; i < 10; i++) {
+    decor.push({ kind: 'torch', x: (2 + rng() * 36) * TILE, y: (2 + rng() * 2) * TILE });
+  }
+  for (let i = 0; i < 14; i++) {
+    decor.push({ kind: rng() < 0.5 ? 'rubble' : 'crystal', x: (2 + rng() * 36) * TILE, y: (3 + rng() * 17) * TILE });
   }
   const monsters = [];
   if (isBossFloor) {
@@ -89,26 +110,27 @@ export function buildDungeonFloor(floor) {
     if (isMiniFloor) monsters.push(makeMiniBoss(floor, rng));
   }
   const objects = [
-    { id: 'portalUp', x: 3 * TILE, y: 16 * TILE, r: 40, label: 'Back to Town (E)' },
+    { id: 'portalUp', x: 3 * TILE, y: 19 * TILE, r: 40, label: 'Back to Town (E)' },
   ];
   // Floor 20 has no stairs down: the only way on is back to town, carrying
   // the Dawn Stone to the altar.
   if (!isBossFloor) {
-    objects.unshift({ id: 'stairsDown', x: 27 * TILE, y: 2 * TILE, r: 40, label: 'Descend (E)', locked: true });
+    objects.unshift({ id: 'stairsDown', x: 36 * TILE, y: 2 * TILE, r: 40, label: 'Descend (E)', locked: true });
   }
   return {
     kind: DUNGEON, floor, label: isBossFloor ? 'Floor 20 — Throne of the Demon King' : `Dungeon — Floor ${floor}`,
     solids,
     objects,
     nodes: [], monsters, drops: [], projectiles: [], particles: [], texts: [],
+    decor,
     cleared: monsters.length === 0,
   };
 }
 
 export function makeMonster(type, floor, rng) {
   const scale = 1 + (floor - 1) * 0.13;
-  const x = (4 + rng() * 22) * TILE;
-  const y = (3 + rng() * 11) * TILE;
+  const x = (4 + rng() * 30) * TILE;
+  const y = (3 + rng() * 15) * TILE;
   return {
     kind: 'monster', type: type.id, name: type.name,
     x, y, r: type.size, color: type.color,
@@ -127,7 +149,7 @@ export function makeMiniBoss(floor, rng) {
   const scale = 1 + (floor - 1) * 0.13;
   return {
     kind: 'monster', type: 'miniboss', name: base.name,
-    x: 15 * TILE, y: 5 * TILE, r: 22, color: base.color,
+    x: CX * TILE, y: 5 * TILE, r: 26, color: base.color,
     hp: Math.round(220 * scale), maxHp: Math.round(220 * scale),
     atk: Math.round(18 * (1 + (floor - 1) * 0.09)),
     speed: 1.5, xp: 120, hitCd: 0, flash: 0, dead: false, ranged: false, shootCd: 2,
@@ -137,7 +159,7 @@ export function makeMiniBoss(floor, rng) {
 export function makeBoss() {
   return {
     kind: 'boss', type: 'demonking', name: FINAL_BOSS.name,
-    x: 15 * TILE, y: 5 * TILE, r: FINAL_BOSS.size, color: FINAL_BOSS.color,
+    x: CX * TILE, y: 5 * TILE, r: FINAL_BOSS.size, color: FINAL_BOSS.color,
     hp: FINAL_BOSS.hp, maxHp: FINAL_BOSS.hp, atk: FINAL_BOSS.atk,
     speed: FINAL_BOSS.speed, xp: 1000, hitCd: 0, flash: 0, dead: false,
     ranged: true, shootCd: 2, summonCd: 6, phase: 1,
@@ -174,10 +196,10 @@ export function nearestObject(area, x, y, maxDist = 70) {
 
 export function randomFreeSpot(area, rng) {
   for (let tries = 0; tries < 30; tries++) {
-    const x = (2 + rng() * 26) * TILE;
-    const y = (2 + rng() * 14) * TILE;
+    const x = (2 + rng() * 34) * TILE;
+    const y = (2 + rng() * 17) * TILE;
     const c = collide(area, x, y, 14);
     if (Math.abs(c.x - x) < 1 && Math.abs(c.y - y) < 1) return { x, y };
   }
-  return { x: 15 * TILE, y: 9 * TILE };
+  return { x: CX * TILE, y: 9 * TILE };
 }

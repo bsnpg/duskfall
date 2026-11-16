@@ -2,8 +2,8 @@
 // All names, numbers and text here are original to this game.
 
 export const TILE = 32;
-export const VIEW_W = 960;
-export const VIEW_H = 600;
+export const VIEW_W = 1280;
+export const VIEW_H = 720;
 
 // The four chosen talents. A new player is assigned one at random and can
 // never choose — that is the point of the story.
@@ -57,14 +57,14 @@ export const TRADE_RATE = 2; // 2 stones of any kind -> 1 stone of your job
 
 // Monsters by dungeon depth tier. Stats scale with the floor in combat.js.
 export const MONSTER_TYPES = [
-  { id: 'rat', name: 'Shadow Rat', hp: 22, atk: 6, speed: 2.2, xp: 8, color: '#8d7fb8', size: 13, minFloor: 1 },
-  { id: 'bat', name: 'Gloom Bat', hp: 16, atk: 8, speed: 3.1, xp: 10, color: '#6a5a9e', size: 11, minFloor: 1 },
-  { id: 'hollow', name: 'Hollow Knight', hp: 55, atk: 11, speed: 1.6, xp: 18, color: '#9aa7c7', size: 16, minFloor: 3 },
-  { id: 'wisp', name: 'Dark Wisp', hp: 30, atk: 13, speed: 2.6, xp: 16, color: '#5ad6ff', size: 12, minFloor: 5 },
-  { id: 'golem', name: 'Cracked Golem', hp: 110, atk: 15, speed: 1.2, xp: 30, color: '#7a6a58', size: 19, minFloor: 8 },
-  { id: 'darkmage', name: 'Dark Mage', hp: 70, atk: 19, speed: 1.9, xp: 34, color: '#c07bff', size: 14, minFloor: 11 },
-  { id: 'stalker', name: 'Dusk Hunter', hp: 95, atk: 22, speed: 3.4, xp: 40, color: '#3ddc97', size: 14, minFloor: 14 },
-  { id: 'dread', name: 'Dreadlord', hp: 160, atk: 26, speed: 1.8, xp: 55, color: '#ff5a5a', size: 18, minFloor: 17 },
+  { id: 'rat', name: 'Shadow Rat', hp: 22, atk: 6, speed: 2.2, xp: 8, color: '#8d7fb8', size: 15, minFloor: 1 },
+  { id: 'bat', name: 'Gloom Bat', hp: 16, atk: 8, speed: 3.1, xp: 10, color: '#6a5a9e', size: 13, minFloor: 1 },
+  { id: 'hollow', name: 'Hollow Knight', hp: 55, atk: 11, speed: 1.6, xp: 18, color: '#9aa7c7', size: 18, minFloor: 3 },
+  { id: 'wisp', name: 'Dark Wisp', hp: 30, atk: 13, speed: 2.6, xp: 16, color: '#5ad6ff', size: 14, minFloor: 5 },
+  { id: 'golem', name: 'Cracked Golem', hp: 110, atk: 15, speed: 1.2, xp: 30, color: '#7a6a58', size: 22, minFloor: 8 },
+  { id: 'darkmage', name: 'Dark Mage', hp: 70, atk: 19, speed: 1.9, xp: 34, color: '#c07bff', size: 16, minFloor: 11 },
+  { id: 'stalker', name: 'Dusk Hunter', hp: 95, atk: 22, speed: 3.4, xp: 40, color: '#3ddc97', size: 16, minFloor: 14 },
+  { id: 'dread', name: 'Dreadlord', hp: 160, atk: 26, speed: 1.8, xp: 55, color: '#ff5a5a', size: 21, minFloor: 17 },
 ];
 
 export const MINI_BOSSES = [
@@ -75,8 +75,20 @@ export const MINI_BOSSES = [
 ];
 
 export const FINAL_BOSS = {
-  name: 'Demon King of Darkness', hp: 1500, atk: 30, speed: 1.7, color: '#ff2e63', size: 34,
+  name: 'Demon King of Darkness', hp: 1500, atk: 30, speed: 1.7, color: '#ff2e63', size: 40,
 };
+
+// Level-up blessings: on every level-up the player picks 1 of 3. A choice
+// that matters — raw power, staying alive, or more crystal fuel.
+export const BLESSINGS = [
+  { id: 'might', name: '⚔️ Might', desc: '+4 ATK, forever.' },
+  { id: 'vitality', name: '❤️ Vitality', desc: '+35 max HP and heal 35 HP now.' },
+  { id: 'ward', name: '🛡️ Ward', desc: '+3 DEF, forever.' },
+  { id: 'keen', name: '🎯 Keen Eye', desc: '+8% critical chance, forever.' },
+  { id: 'swift', name: '💨 Swift Feet', desc: '+0.3 move speed, forever.' },
+  { id: 'hoard', name: '💠 Crystal Hoard', desc: '+12 crystals right now.' },
+  { id: 'secondwind', name: '🌅 Second Wind', desc: 'Heal to full HP right now.' },
+];
 
 // Armor / equipment drops. Rarity drives the stat budget.
 export const RARITIES = {
